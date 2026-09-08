@@ -4,20 +4,27 @@
  * calculator.js
  *
  * A simple Node.js CLI calculator supporting the four basic arithmetic
- * operations:
- *   +  Addition
- *   -  Subtraction
- *   x  Multiplication (also accepts "*")
- *   /  Division
+ * operations, plus modulo, exponentiation, and square root:
+ *   +     Addition
+ *   -     Subtraction
+ *   x     Multiplication (also accepts "*")
+ *   /     Division
+ *   %     Modulo (remainder of division)
+ *   ^     Exponentiation (power)
+ *   sqrt  Square root (unary operation)
  *
  * Usage:
  *   node src/calculator.js <number1> <operator> <number2>
+ *   node src/calculator.js sqrt <number>
  *
  * Examples:
  *   node src/calculator.js 5 + 3
  *   node src/calculator.js 10 - 4
  *   node src/calculator.js 6 x 7
  *   node src/calculator.js 20 / 4
+ *   node src/calculator.js 10 % 3
+ *   node src/calculator.js 2 ^ 8
+ *   node src/calculator.js sqrt 16
  */
 
 // Addition: returns the sum of two numbers.
@@ -44,20 +51,66 @@ function divide(a, b) {
   return a / b;
 }
 
-// Maps supported operator symbols to their corresponding operation function.
+// Modulo: returns the remainder of a divided by b.
+// Throws an error if dividing by zero.
+function modulo(a, b) {
+  if (b === 0) {
+    throw new Error('Modulo by zero is not allowed.');
+  }
+  return a % b;
+}
+
+// Power: returns base raised to the exponent.
+function power(base, exponent) {
+  return Math.pow(base, exponent);
+}
+
+// Square root: returns the square root of n.
+// Throws an error if n is negative, since the result would not be a real number.
+function squareRoot(n) {
+  if (n < 0) {
+    throw new Error('Cannot calculate the square root of a negative number.');
+  }
+  return Math.sqrt(n);
+}
+
+// Maps supported binary operator symbols to their corresponding operation function.
 const OPERATIONS = {
   '+': add,
   '-': subtract,
   'x': multiply,
   '*': multiply,
   '/': divide,
+  '%': modulo,
+  '^': power,
+};
+
+// Maps supported unary operator names to their corresponding operation function.
+const UNARY_OPERATIONS = {
+  'sqrt': squareRoot,
 };
 
 // Parses and validates CLI arguments, then performs the requested calculation.
+// Supports both binary operations (<number1> <operator> <number2>) and
+// unary operations (<operator> <number>), such as `sqrt <number>`.
 function calculate(args) {
+  if (args.length === 2) {
+    const [operator, rawN] = args;
+    const unaryOperation = UNARY_OPERATIONS[operator];
+
+    if (unaryOperation) {
+      const n = Number(rawN);
+      if (Number.isNaN(n)) {
+        throw new Error('The operand must be a valid number.');
+      }
+      return unaryOperation(n);
+    }
+  }
+
   if (args.length !== 3) {
     throw new Error(
-      'Usage: node src/calculator.js <number1> <operator> <number2>'
+      'Usage: node src/calculator.js <number1> <operator> <number2>\n' +
+        '   or: node src/calculator.js sqrt <number>'
     );
   }
 
@@ -72,7 +125,7 @@ function calculate(args) {
   const operation = OPERATIONS[operator];
   if (!operation) {
     throw new Error(
-      `Unsupported operator "${operator}". Use one of: + - x /`
+      `Unsupported operator "${operator}". Use one of: + - x / % ^ sqrt`
     );
   }
 
@@ -96,4 +149,13 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { add, subtract, multiply, divide, calculate };
+module.exports = {
+  add,
+  subtract,
+  multiply,
+  divide,
+  modulo,
+  power,
+  squareRoot,
+  calculate,
+};
